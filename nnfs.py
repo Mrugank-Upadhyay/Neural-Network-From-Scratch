@@ -1,10 +1,8 @@
 import sys
 import numpy as np
-import matplotlib
+# import matplotlib
 import nnfs
-from nnfs.datasets import spiral_data_generator
 from nnfs.datasets import spiral_data
-import nnfs.datasets.spiral
 
 nnfs.init()
 
@@ -74,3 +72,11 @@ print(activation2.output[:5])
 
 loss = loss_function.calculate(activation2.output, y)
 print('loss:', loss)
+
+#calculating accuracy
+predictions = np.argmax(activation2.output, axis=1)
+# if we don't use one-hot encoding
+if len(y.shape) == 2:
+    y = np.argmax(y, axis=1)
+accuracy = np.mean(predictions==y)
+print("acc:", accuracy)
