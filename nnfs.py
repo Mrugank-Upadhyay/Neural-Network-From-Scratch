@@ -2,8 +2,9 @@ import sys
 import numpy as np
 import matplotlib
 import nnfs
+from nnfs.datasets import spiral_data_generator
 from nnfs.datasets import spiral_data
-
+import nnfs.datasets.spiral
 
 nnfs.init()
 
@@ -15,7 +16,7 @@ class Layer_Dense:
         # note that for randn, the parameters passed in EQUATE to the shape
         # also note that we set the weights as inputSize * n_neurons so we don't have to transpose
         # when we do the forward pass
-        self.weights = 0.10 * np.random.randn(n_inputs, n_neurons)
+        self.weights = 0.01 * np.random.randn(n_inputs, n_neurons)
         # we want a shape of 1 x n_neurons
         # note for zeros, the first parameter IS the actual shape (so it must be a tuple)
         self.biases = np.zeros((1, n_neurons))
@@ -27,16 +28,31 @@ class Activation_ReLU:
     def forward(self, inputs):
         self.output = np.maximum(0, inputs)
 
+# Used in the output layer
 class Activation_Softmax:
     def forward(self, inputs):
         exp_values = np.exp(inputs - np.max(inputs, axis=1, keepdims=True))
         probabilities = exp_values / np.sum(exp_values, axis=1, keepdims=True)
         self.output = probabilities
 
-# number of inputs, and neurons
-layer1 = Layer_Dense(2, 5)
-# remember that since we have 5 neurons in layer 1, we have 5 outputs, and so layer2 has 5 inputs
-# layer2 = Layer_Dense(5, 2)
+class Loss:
+    def calculate(self, output, y):
+        sample_losses = self.forward(output, y)
+        data_loss = np.mean(sample_losses)
+        return data_loss
+
+class Loss_CategoricalCrossEntropy(Loss):
+    def forward(self, y_pred, y_true):
+        samples = len(y_pred)
+        y_pred_clipped = np.clip(y_pred, 1e-9, 1 - 1e-9)
+        # create confidences using both normal and one-hot-encoding structures
+        if len(y_true.shape) == 1:
+            correct_confidences = y_pred_clipped[range(samples), y_true]
+        else:
+            correct_confidences = np.sum(y_pred_clipped * y_true, axis=1)
+
+        negative_log_likelihoods = -np.log(correct_confidences)
+        return negative_log_likelihoods
 
 X, y = spiral_data(samples=100, classes=3)
 
@@ -46,6 +62,8 @@ activation1 = Activation_ReLU()
 dense2 = Layer_Dense(3, 3)
 activation2 = Activation_Softmax()
 
+loss_function = Loss_CategoricalCrossEntropy()
+
 dense1.forward(X)
 activation1.forward(dense1.output)
 
@@ -53,3 +71,6 @@ dense2.forward(activation1.output)
 activation2.forward(dense2.output)
 
 print(activation2.output[:5])
+
+loss = loss_function.calculate(activation2.output, y)
+print('loss:', loss)
