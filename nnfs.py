@@ -43,6 +43,8 @@ class Loss:
 class Loss_CategoricalCrossEntropy(Loss):
     def forward(self, y_pred, y_true):
         samples = len(y_pred)
+        # we want to clip to ensure that when we use log, we don't go to inf when the value is 0
+        # so we'll keep things clipped to a range of 1e-9 to 1 - 1e-9
         y_pred_clipped = np.clip(y_pred, 1e-9, 1 - 1e-9)
         # create confidences using both normal and one-hot-encoding structures
         if len(y_true.shape) == 1:
