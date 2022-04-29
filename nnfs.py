@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import modules
 from modules.datasets import *
@@ -53,6 +54,9 @@ class Loss_CategoricalCrossEntropy(Loss):
         return negative_log_likelihoods
 
 X, y = spiral_data(samples=100, classes=3)
+
+plt.scatter(X[:,0], X[:, 1], c=y, s=40, cmap='brg')
+plt.show()
 
 dense1 = Layer_Dense(2,3)
 activation1 = Activation_ReLU()
