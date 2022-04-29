@@ -10,7 +10,7 @@ In doing so, I will explore the usecases, advantages, and disadvantages of each 
 
 - Activation Functions: Sigmoid, ReLU
 - Loss Function: Binary Cross Entropy, Categorical Cross Entropy, Mean Squared Error, Mean Absolute Error
-- Optimizers: SGD, AdaGrad, RMSprop, Adam
+- Optimizers: SGD (with and without momentum), AdaGrad, RMSprop, Adam
 - Backpropogation
 - Overfitting / Underfitting: L1 & L2 regularization, dropout
 - Binary Logistic Regression
