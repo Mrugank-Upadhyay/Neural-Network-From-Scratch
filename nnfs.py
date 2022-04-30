@@ -20,12 +20,25 @@ class Layer_Dense:
         # note for zeros, the first parameter IS the actual shape (so it must be a tuple)
         self.biases = np.zeros((1, n_neurons))
     def forward(self, inputs):
+        self.inputs = inputs
         self.output = np.dot(inputs, self.weights) + self.biases
+    def backward(self, dvalues):
+        # Gradient on params
+        self.dweights = np.dot(self.inputs.T, dvalues)
+        self.dbiases = np.sum(dvalues, axis=0, keepdims=True)
+        # Gradient on values
+        self.dinputs = np.dot(dvalues, self.weights.T)
 
 
 class Activation_ReLU:
     def forward(self, inputs):
+        self.inputs = inputs
         self.output = np.maximum(0, inputs)
+    def backward(self, dvalues):
+        # We will make a copy of the values since we need to modify the original variable
+        self.dinputs = dvalues.copy()
+        # We have a gradient of 0 for non-positive inputs
+        self.dinputs[self.inputs <= 0] = 0
 
 # Used in the output layer
 class Activation_Softmax:
@@ -54,6 +67,19 @@ class Loss_CategoricalCrossEntropy(Loss):
 
         negative_log_likelihoods = -np.log(correct_confidences)
         return negative_log_likelihoods
+    def backward(self, dvalues, y_true):
+        samples = len(dvalues)
+        # For number of labels, we can just use the number found in the first sample
+        labels = len(dvalues[0])
+
+        # Convert sparse labels into one-hot vector
+        if len(y_true.shape) == 1:
+            y_true = np.eye(labels)[y_true]
+        
+        # Calculate gradient
+        self.dinputs = -y_true / dvalues
+        # Normalize gradient
+        self.dinputs = self.dinputs / samples
 
 X, y = spiral_data(samples=100, classes=3)
 
