@@ -16,12 +16,15 @@ class Layer_Dense:
         # also note that we set the weights as inputSize * n_neurons so we don't have to transpose
         # when we do the forward pass
         self.weights = 0.01 * np.random.randn(n_inputs, n_neurons)
+        
         # we want a shape of 1 x n_neurons
         # note for zeros, the first parameter IS the actual shape (so it must be a tuple)
         self.biases = np.zeros((1, n_neurons))
+
     def forward(self, inputs):
         self.inputs = inputs
         self.output = np.dot(inputs, self.weights) + self.biases
+
     def backward(self, dvalues):
         # Gradient on params
         self.dweights = np.dot(self.inputs.T, dvalues)
@@ -34,6 +37,7 @@ class Activation_ReLU:
     def forward(self, inputs):
         self.inputs = inputs
         self.output = np.maximum(0, inputs)
+
     def backward(self, dvalues):
         # We will make a copy of the values since we need to modify the original variable
         self.dinputs = dvalues.copy()
@@ -46,6 +50,19 @@ class Activation_Softmax:
         exp_values = np.exp(inputs - np.max(inputs, axis=1, keepdims=True))
         probabilities = exp_values / np.sum(exp_values, axis=1, keepdims=True)
         self.output = probabilities
+
+    def backward(self, dvalues):
+        self.dinputs = np.empty_like(dvalues)
+        # Enumerate outputs and gradients
+        for index, (single_output, single_dvalues) in enumerate(zip(self.output, dvalues)):
+            # Flatten output array
+            single_output = single_output.reshape(-1, 1)
+            
+            # Calculate the Jacobian matrix of the output
+            jacobian_matrix = np.diagflat(single_output) - np.dot(single_output, single_output.T)
+
+            # Calculate the sample-wise gradient and add it to the array of sample gradients
+            self.dinputs[index] = np.dot(jacobian_matrix, single_dvalues)
 
 class Loss:
     def calculate(self, output, y):
@@ -67,6 +84,7 @@ class Loss_CategoricalCrossEntropy(Loss):
 
         negative_log_likelihoods = -np.log(correct_confidences)
         return negative_log_likelihoods
+
     def backward(self, dvalues, y_true):
         samples = len(dvalues)
         # For number of labels, we can just use the number found in the first sample
